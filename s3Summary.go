@@ -4,9 +4,10 @@ import "github.com/aws/aws-sdk-go/aws"
 import "github.com/aws/aws-sdk-go/aws/session"
 import "github.com/aws/aws-sdk-go/service/s3"
 import "fmt"
+import "strconv"
 
 func main(){
-    config := aws.NewConfig().WithRegion("us-west-2")
+    config := aws.NewConfig().WithRegion("ap-southeast-1")
     svc := s3.New(session.New(config))
 
     var params *s3.ListBucketsInput
@@ -17,11 +18,23 @@ func main(){
         return
     }
     
-    for i,b :=range resp.Buckets{
-        fmt.Println(i)
-        fmt.Println(b)
+    for _,b :=range resp.Buckets{
+        listParams := &s3.ListObjectsV2Input{Bucket: b.Name}
+        for{
+            respLs, errLs := svc.ListObjectsV2(listParams)
+            if errLs != nil{
+                fmt.Println(errLs.Error())
+                return
+            }
+            for _,f :=range respLs.Contents{
+                fmt.Printf("bucket=%s key=\"%s\" size=%d lastModified=%s\n",*b.Name,*f.Key,*f.Size,strconv.FormatInt(f.LastModified.Unix(),10))
+            }
+            if *respLs.IsTruncated{
+                listParams.ContinuationToken=respLs.NextContinuationToken
+            }else{
+                break
+            }
+        }
+        return
     }
-
-    // Pretty-print the response data.
-    fmt.Println(resp.Buckets)    
 }
