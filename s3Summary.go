@@ -35,6 +35,5 @@ func main(){
                 break
             }
         }
-        return
     }
 }
