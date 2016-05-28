@@ -7,7 +7,7 @@ import "fmt"
 import "strconv"
 
 func main(){
-    const usEast="us-east-1"
+    var usEast="us-east-1"
     config := aws.NewConfig().WithRegion(usEast)//ues any region to list buckets
     svc := s3.New(session.New(config))
 
@@ -22,11 +22,10 @@ func main(){
         locationOutput,_:=svc.GetBucketLocation(&s3.GetBucketLocationInput{Bucket: b.Name})
 
         bucketRegion:=locationOutput.LocationConstraint
-        if bucketRegion!=nil{
-            config.WithRegion(*bucketRegion)
-        }else{
-            config.WithRegion(usEast)//for 'US Standard', no such location in metadata
+        if bucketRegion==nil{
+            bucketRegion=&usEast
         }
+        config.WithRegion(*bucketRegion)
         svc := s3.New(session.New(config)) //reset S3 sevice to use the new region
         listParams := &s3.ListObjectsV2Input{Bucket: b.Name}
         for{
